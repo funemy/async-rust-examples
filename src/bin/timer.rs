@@ -1,4 +1,3 @@
-use futures::future::Shared;
 use futures::{
     future::{BoxFuture, FutureExt},
     task::{waker_ref, ArcWake},
