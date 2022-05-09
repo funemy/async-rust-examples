@@ -68,6 +68,7 @@ impl Timer {
         // If the waker has been set by the executor, then invoke `waker.wake()` (asking the Executor to poll again)
         thread::spawn(move || {
             thread::sleep(duration);
+            println!("timeout!");
             let mut shared_state = thread_shared_state.lock().unwrap();
             shared_state.completed = true;
             if let Some(waker) = shared_state.waker.take() {
@@ -115,7 +116,10 @@ struct Task {
     task_sender: SyncSender<Arc<Task>>,
 }
 
+// The Waker implementation
 impl ArcWake for Task {
+    // `wake` function
+    // send the task back to the task queue when it's ready to make further progresses.
     fn wake_by_ref(arc_self: &Arc<Self>) {
         let cloned = arc_self.clone();
         arc_self
@@ -126,13 +130,22 @@ impl ArcWake for Task {
 }
 
 impl Executor {
+    // This naive Executor handles tasks one-by-one from the task queue.
     fn run(&self) {
+        // Receive the next pending task from the ready queue
         while let Ok(task) = self.ready_queue.recv() {
             let mut future_slot = task.future.lock().unwrap();
             if let Some(mut future) = future_slot.take() {
+                // make a waker instance from the task
+                // remember that task implements ArcWake trait
                 let waker = waker_ref(&task);
+                // make a context instance from the waker
                 let cx = &mut Context::from_waker(&waker);
+                // poll the future with the context
                 if future.as_mut().poll(cx).is_pending() {
+                    // NOTE: I'm slightly confused by this
+                    // We haven't finished processing the future yet
+                    // So put this future back to the futuer slot, otherwise the task will carry an empty future?
                     *future_slot = Some(future)
                 }
             }
