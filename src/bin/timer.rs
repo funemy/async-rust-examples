@@ -26,7 +26,7 @@ struct SharedState {
     waker: Option<Waker>,
 }
 
-// Timer implements Future trait
+// NOTE: Future Actor
 impl Future for Timer {
     // No return value when the timer finishes
     type Output = ();
@@ -49,6 +49,7 @@ impl Future for Timer {
     }
 }
 
+// NOTE: Timer Actor
 impl Timer {
     // Constructor for Timer
     pub fn new(duration: Duration) -> Self {
@@ -95,6 +96,7 @@ struct Spawner {
     task_sender: SyncSender<Arc<Task>>,
 }
 
+// NOTE: Spawner Actor
 impl Spawner {
     // An interface for spwaning the timer tasks
     fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
@@ -116,7 +118,7 @@ struct Task {
     task_sender: SyncSender<Arc<Task>>,
 }
 
-// The Waker implementation
+// NOTE: Waker Actor
 impl ArcWake for Task {
     // `wake` function
     // send the task back to the task queue when it's ready to make further progresses.
@@ -129,6 +131,7 @@ impl ArcWake for Task {
     }
 }
 
+// NOTE: Executor Actor
 impl Executor {
     // This naive Executor handles tasks one-by-one from the task queue.
     fn run(&self) {
@@ -161,6 +164,7 @@ fn new_executor_and_spawner() -> (Executor, Spawner) {
     (Executor { ready_queue }, Spawner { task_sender })
 }
 
+// NOTE: Main Actor
 fn main() {
     let (executor, spawner) = new_executor_and_spawner();
     spawner.spawn(async {
