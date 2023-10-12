@@ -83,33 +83,14 @@ impl Timer {
 }
 
 // Executor for Timer
+// The task queue of the executor is modelled by a channel.
+// When scheduling a task, the `spawn` function send the given task into the channel
+// (therefore the task stays in the buffer of the channel)
 struct Executor {
-    // A queue for pending tasks
     // Tasks are sent through a channel
     ready_queue: Receiver<Arc<Task>>,
-}
 
-#[derive(Clone)]
-struct Spawner {
-    // The sender of tasks
-    // `task_sender` sends the given task to the channel, thus the task will be received by `Executor`
-    task_sender: SyncSender<Arc<Task>>,
-}
-
-// NOTE: Spawner Actor
-impl Spawner {
-    // An interface for spwaning the timer tasks
-    fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
-        // Make Rust's type system happy
-        let future = future.boxed();
-        // Create the task instance
-        let task = Arc::new(Task {
-            future: Mutex::new(Some(future)),
-            task_sender: self.task_sender.clone(),
-        });
-        // Send the task through the channel
-        self.task_sender.send(task).expect("too many tasks queued.");
-    }
+    task_sender: Option<SyncSender<Arc<Task>>>,
 }
 
 struct Task {
@@ -133,8 +114,19 @@ impl ArcWake for Task {
 
 // NOTE: Executor Actor
 impl Executor {
+    // constructor
+    fn new() -> Self {
+        const MAX_QUEUE_SIZE: usize = 10_000;
+        let (task_sender, ready_queue) = sync_channel(MAX_QUEUE_SIZE);
+        Executor {
+            ready_queue,
+            task_sender: Some(task_sender),
+        }
+    }
+
     // This naive Executor handles tasks one-by-one from the task queue.
-    fn run(&self) {
+    fn run(mut self) {
+        self.task_sender.take();
         // Receive the next pending task from the ready queue
         while let Ok(task) = self.ready_queue.recv() {
             let mut future_slot = task.future.lock().unwrap();
@@ -154,24 +146,32 @@ impl Executor {
             }
         }
     }
-}
 
-// Constructor for Executor and Spawner
-// Executor and Spawner in our case correspond to the two ends of a channel
-fn new_executor_and_spawner() -> (Executor, Spawner) {
-    const MAX_QUEUE_SIZE: usize = 10_000;
-    let (task_sender, ready_queue) = sync_channel(MAX_QUEUE_SIZE);
-    (Executor { ready_queue }, Spawner { task_sender })
+    // An interface for spwaning tasks
+    fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
+        // Make Rust's type system happy
+        let future = future.boxed();
+        // Create the task instance
+        let task = Arc::new(Task {
+            future: Mutex::new(Some(future)),
+            task_sender: self.task_sender.clone().unwrap().clone(),
+        });
+        // Send the task through the channel
+        self.task_sender
+            .clone()
+            .unwrap()
+            .send(task)
+            .expect("too many tasks queued.");
+    }
 }
 
 // NOTE: Main Actor
 fn main() {
-    let (executor, spawner) = new_executor_and_spawner();
-    spawner.spawn(async {
+    let executor = Executor::new();
+    executor.spawn(async {
         println!("Hello");
         Timer::new(Duration::from_secs(2)).await;
         println!("Done");
     });
-    drop(spawner);
     executor.run()
 }
