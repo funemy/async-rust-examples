@@ -1,12 +1,5 @@
-use std::{
-    sync::atomic::AtomicBool,
-    pin::Pin,
-    future::Future,
-    sync::atomic::Ordering::SeqCst,
-    sync::Mutex,
-    task::{Context, Poll, Waker},
-    sync::Arc
-};
+use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc, thread};
+use std::time::Duration;
 
 pub fn channel<T>() -> (Sender<T>, Receiver<T>) {
     let inner = Arc::new(Inner::new());
@@ -23,6 +16,12 @@ pub struct Sender<T> {
     inner : Arc<Inner<T>>
 }
 
+// smol uses their custom lock instead of mutex
+// The idea is that you don't want to call "lock"
+// in an async library.
+// Instead, you should always do "try_lock",
+// therefore, they implemented their own lock
+// which only exposes "try_lock".
 struct Inner<T> {
     data : Mutex<Option<T>>,
     complete : AtomicBool,
@@ -82,7 +81,7 @@ impl <T>Inner<T> {
         };
 
         if done || self.complete.load(SeqCst) {
-            match self.data.lock() {
+            match self.data.try_lock() {
                 Ok(mut d) => {
                     let data = d.take();
                     match data {
@@ -93,6 +92,7 @@ impl <T>Inner<T> {
                 Err(_) => unreachable!()
             }
         } else {
+            println!("receiver pending");
             Poll::Pending
         }
     }
@@ -102,10 +102,13 @@ impl <T>Inner<T> {
             return Err(t);
         }
 
-        match self.data.lock() {
+        match self.data.try_lock() {
             Ok(mut data) => {
                 assert!(data.is_none());
-                *data = Some(t)
+                *data = Some(t);
+                // NOTE: setting complete here will be buggy
+                // self.complete.store(true, SeqCst);
+                thread::sleep(Duration::from_secs(3));
             }
             Err(_) => {
                 unreachable!()
@@ -113,6 +116,18 @@ impl <T>Inner<T> {
         }
         // NOTE: I forgot the line below on my first try
         self.complete.store(true, SeqCst);
+
+        // NOTE: and I forgot the code below on my second try
+        match self.rx_task.try_lock() {
+            Ok(mut rx_task) => {
+                let rx = rx_task.take();
+                if let Some(w) = rx {
+                    w.wake()
+                }
+            }
+            Err(_) => unreachable!()
+        }
+
         Ok(())
     }
 }

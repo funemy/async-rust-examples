@@ -1,3 +1,4 @@
+use std::thread;
 use smol::{block_on, Executor};
 use async_example::ncos_channel;
 use async_example::ncos_channel::{Receiver, Sender};
@@ -19,7 +20,9 @@ async fn receiving(r : Receiver<String>) {
 async fn example () {
     let (s, r) = ncos_channel::channel();
     let t = EX.spawn(receiving(r));
-    sending(s);
+    thread::spawn(|| {
+        sending(s);
+    });
     t.await
 }
 
