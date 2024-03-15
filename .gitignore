@@ -1,1 +1,11 @@
 /target
+.DS_Store
+.idea
+.vscode
+*.svg
+*.png
+*.out
+/*.txt
+*.hir
+design.md
+design.pdf

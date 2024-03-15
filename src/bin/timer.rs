@@ -26,6 +26,11 @@ struct SharedState {
     waker: Option<Waker>,
 }
 
+// Prop of Futures/Tasks
+// forall T : Task . exist deps : Seq[Task] .
+//  forall i j : Int . 0 <= i < j <= len(deps) . !done(deps(i)) => !done(deps(j)) & awaited
+//  & (forall t in deps . done(t)) ~> done(T)
+// TODO: 2. awaited(t) -- whether a task is being awaited, i.e., calling `t.await`
 // NOTE: Future Actor
 impl Future for Timer {
     // No return value when the timer finishes
@@ -96,6 +101,10 @@ struct Executor {
 struct Task {
     future: Mutex<Option<BoxFuture<'static, ()>>>,
 
+    // This part is tricky and serves two purposes:
+    // 1. to implement the `wake` function, we need a way to "put the task back into the queue", and `task_sender` is our handle of the queue
+    // 2. `task_sender` drops when the task drops, and the channel closes when all of its sender drops. Moreover, the Executor exits when the channel is closed,
+    //    so this field also act as a signal for Executor to exit.
     task_sender: SyncSender<Arc<Task>>,
 }
 
@@ -124,6 +133,16 @@ impl Executor {
         }
     }
 
+    // Prop 1 (Executor::run)
+    // forall t : Task . ex : Executor .
+    //  scheduled(t) ~> t.poll(cx)
+    //      where cx : Context . cx.wake() & awaited(t) ~> t.poll(cx)
+    //
+    // Intuitively, the property above captures the essential behavior of Executor::run for guaranteeing task responsiveness.
+    // To verify this, we need to futher define the two conditions:
+    // 1. scheduled(t) -- t is in the active queue of the executor.
+    //    To concretely define this, we need to specify what is the "active queue" and what it means for a task to "be in the active queue".
+    //
     // This naive Executor handles tasks one-by-one from the task queue.
     fn run(mut self) {
         self.task_sender.take();
@@ -147,6 +166,10 @@ impl Executor {
         }
     }
 
+    // Prop 2 (Executor::spawn)
+    // forall t : Task .
+    //  spawn(t) ~> scheuled(t)
+    //
     // An interface for spwaning tasks
     fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
         // Make Rust's type system happy
@@ -165,7 +188,18 @@ impl Executor {
     }
 }
 
-// NOTE: Main Actor
+// NOTE:
+// The reason this main function terminates is very tricky
+// Executor:run is in a while-loop, conditioned on `recv`
+// `recv` only returns when all senders are dropped.
+// The components that carry a sender are Executor and all tasks.
+// At the start of `Executor::run`, executor drops its sender.
+// Therefore, the channel will be closed when all tasks are dropped,
+// and then the while-loop will exit and `run`A will return.
+// NOTE:
+// However, this should not affect our proof, since we only want to prove:
+//   whether executor guarantees the responsivenesss of task
+// But not the responsiveness of executor itself.
 fn main() {
     let executor = Executor::new();
     executor.spawn(async {
