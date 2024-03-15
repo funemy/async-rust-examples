@@ -1,5 +1,6 @@
 use std::thread;
-use smol::{block_on, Executor};
+use std::time::Duration;
+use smol::{block_on, Executor, Timer};
 use async_example::ncos_channel;
 use async_example::ncos_channel::{Receiver, Sender};
 

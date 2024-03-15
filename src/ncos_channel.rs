@@ -1,5 +1,4 @@
-use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc, thread};
-use std::time::Duration;
+use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc};
 
 pub fn channel<T>() -> (Sender<T>, Receiver<T>) {
     let inner = Arc::new(Inner::new());
@@ -98,6 +97,7 @@ impl <T>Inner<T> {
     }
 
     fn send(self: &Self, t: T) -> Result<(), T> {
+        // prevent re-sending
         if self.complete.load(SeqCst) {
             return Err(t);
         }
@@ -106,9 +106,13 @@ impl <T>Inner<T> {
             Ok(mut data) => {
                 assert!(data.is_none());
                 *data = Some(t);
-                // NOTE: setting complete here will be buggy
+                // NOTE: setting complete here will be buggy --
+                //  If there's a big delay BETWEEN setting complete to true
+                //  and releasing the lock, and "recv" is called in the period,
+                //  then receiver will not store its waker to rx_task,
+                //  but the "try_lock" on data will also fail.
                 // self.complete.store(true, SeqCst);
-                thread::sleep(Duration::from_secs(3));
+                // thread::sleep(Duration::from_secs(3));
             }
             Err(_) => {
                 unreachable!()
