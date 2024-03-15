@@ -10,6 +10,8 @@ fn sending(s : Sender<String>) {
 }
 
 async fn receiving(r : Receiver<String>) {
+    // every future can only be awaited once
+    // so we don't need to worry about r.await being called again
     let d = r.await;
     println!("data: {}", d);
 }

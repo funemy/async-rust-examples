@@ -111,6 +111,8 @@ impl <T>Inner<T> {
                 unreachable!()
             }
         }
+        // NOTE: I forgot the line below on my first try
+        self.complete.store(true, SeqCst);
         Ok(())
     }
 }
