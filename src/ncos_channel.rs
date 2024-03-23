@@ -1,4 +1,5 @@
-use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc};
+use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc, thread};
+use std::time::Duration;
 
 pub fn channel<T>() -> (Sender<T>, Receiver<T>) {
     let inner = Arc::new(Inner::new());
@@ -65,6 +66,17 @@ impl <T> Sender<T> {
 
 // NOTE: The REALLY important stuff
 impl <T>Inner<T> {
+    // ready condition:
+    //  (done \/ self.complete == true) /\
+    //  owner(self.data.lock) == true /\
+    //  is_some(data) == true
+
+    // Negative reasoning:
+    // 1. Exists Ready-returning path? -- Yes, with also with "ready condition"
+    // 2. For all Pending-returning paths, have gen(wake) -- Yes, if Pending is returned, `done` must be false, AND `complete` must be false, therefore rx_task must be set.
+    // 3. consume(wake) definitely happen after gen(wake) -- Yes, by tracking `complete`, which is read/write in a SeqCst way, gen(wake) always happen before consume(wake),
+    //    AND if gen(wake) exists, consume(wake) must also exists
+    // 4. consume(wake) is on a path that must satisfy the path condition of Ready-returning path. -- Yes, because `complete` is set to true before consume(wake)
     fn recv(self: &Self, cx: &Context<'_>) -> Poll<T> {
         let done = if self.complete.load(SeqCst) {
             true
@@ -73,6 +85,8 @@ impl <T>Inner<T> {
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
                     *rx_task = Some(task);
+                    // NOTE: this can trigger "send@2"
+                    // thread::sleep(Duration::from_secs(3));
                     false
                 }
                 Err(_) => true
@@ -85,10 +99,11 @@ impl <T>Inner<T> {
                     let data = d.take();
                     match data {
                         Some(data) => Poll::Ready(data),
-                        None => unreachable!()
+                        // FIXME: this could be wrong, because it's possible for recv to be wake up after it's finished, therefore data will be taken.
+                        None => unreachable!("recv@1")
                     }
                 }
-                Err(_) => unreachable!()
+                Err(_) => unreachable!("recv@2")
             }
         } else {
             println!("receiver pending");
@@ -111,17 +126,17 @@ impl <T>Inner<T> {
                 //  and releasing the lock, and "recv" is called in the period,
                 //  then receiver will not store its waker to rx_task,
                 //  but the "try_lock" on data will also fail.
+                //  --
+                //  In conclusion, this may trigger recv@2
                 // self.complete.store(true, SeqCst);
                 // thread::sleep(Duration::from_secs(3));
             }
             Err(_) => {
-                unreachable!()
+                unreachable!("send@1")
             }
         }
-        // NOTE: I forgot the line below on my first try
         self.complete.store(true, SeqCst);
 
-        // NOTE: and I forgot the code below on my second try
         match self.rx_task.try_lock() {
             Ok(mut rx_task) => {
                 let rx = rx_task.take();
@@ -129,7 +144,8 @@ impl <T>Inner<T> {
                     w.wake()
                 }
             }
-            Err(_) => unreachable!()
+            // FIXME: This is reachable
+            Err(_) => unreachable!("send@2")
         }
 
         Ok(())
