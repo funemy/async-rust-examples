@@ -81,6 +81,7 @@ impl <T>Inner<T> {
         let done = if self.complete.load(SeqCst) {
             true
         } else {
+            thread::sleep(Duration::from_secs(4));
             let task = cx.waker().clone();
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
@@ -99,7 +100,9 @@ impl <T>Inner<T> {
                     let data = d.take();
                     match data {
                         Some(data) => Poll::Ready(data),
-                        // FIXME: this could be wrong, because it's possible for recv to be wake up after it's finished, therefore data will be taken.
+                        // NOTE: it's technically possible for recv to be wake up after it's finished,
+                        //  but this is prevented by wake function, because task has an internal
+                        //  state to indicate its completion
                         None => unreachable!("recv@1")
                     }
                 }
@@ -141,10 +144,10 @@ impl <T>Inner<T> {
             Ok(mut rx_task) => {
                 let rx = rx_task.take();
                 if let Some(w) = rx {
-                    w.wake()
+                    println!("wake up rx_task");
+                    w.wake();
                 }
             }
-            // FIXME: This is reachable
             Err(_) => unreachable!("send@2")
         }
 
