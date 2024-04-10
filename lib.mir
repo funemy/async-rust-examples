@@ -1,0 +1,1086 @@
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+fn counter::<impl at src/counter.rs:10:1: 10:13>::new(_1: Option<u32>) -> Counter {
+    debug counts => _1;
+    let mut _0: counter::Counter;
+    let mut _2: isize;
+    let _3: u32;
+    scope 1 {
+        debug c => _3;
+    }
+
+    bb0: {
+        _2 = discriminant(_1);
+        switchInt(move _2) -> [0: bb3, 1: bb2, otherwise: bb1];
+    }
+
+    bb1: {
+        unreachable;
+    }
+
+    bb2: {
+        _3 = ((_1 as Some).0: u32);
+        _0 = Counter { counts: _3 };
+        goto -> bb4;
+    }
+
+    bb3: {
+        _0 = Counter { counts: const 0_u32 };
+        goto -> bb4;
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+fn counter::<impl at src/counter.rs:23:1: 23:24>::poll(_1: Pin<&mut Counter>, _2: &mut Context<'_>) -> Poll<()> {
+    debug self => _1;
+    debug cx => _2;
+    let mut _0: std::task::Poll<()>;
+    let mut _3: u32;
+    let mut _4: &counter::Counter;
+    let mut _5: &std::pin::Pin<&mut counter::Counter>;
+    let _6: ();
+    let mut _7: std::fmt::Arguments<'_>;
+    let mut _8: &[&str];
+    let _9: ();
+    let mut _10: std::fmt::Arguments<'_>;
+    let mut _11: &[&str];
+    let mut _12: &[core::fmt::rt::Argument<'_>];
+    let _13: &[core::fmt::rt::Argument<'_>; 1];
+    let _14: [core::fmt::rt::Argument<'_>; 1];
+    let mut _15: core::fmt::rt::Argument<'_>;
+    let _16: &u32;
+    let _17: &counter::Counter;
+    let mut _18: &std::pin::Pin<&mut counter::Counter>;
+    let mut _19: &mut counter::Counter;
+    let mut _20: &mut std::pin::Pin<&mut counter::Counter>;
+    let mut _21: (u32, bool);
+    let _22: ();
+    let mut _23: std::task::Waker;
+    let _24: &std::task::Waker;
+    let mut _25: &std::task::Context<'_>;
+    let mut _26: &[&str; 1];
+    let mut _27: &[&str; 2];
+
+    bb0: {
+        _5 = &_1;
+        _4 = <Pin<&mut Counter> as Deref>::deref(move _5) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _3 = ((*_4).0: u32);
+        switchInt(move _3) -> [0: bb2, otherwise: bb5];
+    }
+
+    bb2: {
+        _26 = const <counter::Counter as std::future::Future>::poll::promoted[0];
+        _8 = _26 as &[&str] (PointerCoercion(Unsize));
+        _7 = Arguments::<'_>::new_const(move _8) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = _print(move _7) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _0 = Poll::<()>::Ready(const ());
+        goto -> bb15;
+    }
+
+    bb5: {
+        _27 = const <counter::Counter as std::future::Future>::poll::promoted[1];
+        _11 = _27 as &[&str] (PointerCoercion(Unsize));
+        _18 = &_1;
+        _17 = <Pin<&mut Counter> as Deref>::deref(move _18) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _16 = &((*_17).0: u32);
+        _15 = core::fmt::rt::Argument::<'_>::new_display::<u32>(_16) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _14 = [move _15];
+        _13 = &_14;
+        _12 = _13 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize));
+        _10 = Arguments::<'_>::new_v1(move _11, move _12) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        _9 = _print(move _10) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        _20 = &mut _1;
+        _19 = <Pin<&mut Counter> as DerefMut>::deref_mut(move _20) -> [return: bb10, unwind continue];
+    }
+
+    bb10: {
+        _21 = CheckedSub(((*_19).0: u32), const 1_u32);
+        assert(!move (_21.1: bool), "attempt to compute `{} - {}`, which would overflow", ((*_19).0: u32), const 1_u32) -> [success: bb11, unwind continue];
+    }
+
+    bb11: {
+        ((*_19).0: u32) = move (_21.0: u32);
+        _25 = &(*_2);
+        _24 = Context::<'_>::waker(move _25) -> [return: bb12, unwind continue];
+    }
+
+    bb12: {
+        _23 = <Waker as Clone>::clone(_24) -> [return: bb13, unwind continue];
+    }
+
+    bb13: {
+        _22 = Waker::wake(move _23) -> [return: bb14, unwind continue];
+    }
+
+    bb14: {
+        _0 = Poll::<()>::Pending;
+        goto -> bb15;
+    }
+
+    bb15: {
+        return;
+    }
+}
+
+const counter::<impl at src/counter.rs:23:1: 23:24>::poll::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "counts is 0, done\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const counter::<impl at src/counter.rs:23:1: 23:24>::poll::promoted[1]: &[&str; 2] = {
+    let mut _0: &[&str; 2];
+    let mut _1: [&str; 2];
+
+    bb0: {
+        _1 = [const "counts is ", const ", pending\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+fn ncos_channel::channel() -> (ncos_channel::Sender<T>, ncos_channel::Receiver<T>) {
+    let mut _0: (ncos_channel::Sender<T>, ncos_channel::Receiver<T>);
+    let _1: std::sync::Arc<ncos_channel::Inner<T>>;
+    let mut _2: ncos_channel::Inner<T>;
+    let mut _4: std::sync::Arc<ncos_channel::Inner<T>>;
+    let mut _5: &std::sync::Arc<ncos_channel::Inner<T>>;
+    let mut _7: std::sync::Arc<ncos_channel::Inner<T>>;
+    let mut _8: ncos_channel::Sender<T>;
+    let mut _9: bool;
+    scope 1 {
+        debug inner => _1;
+        let _3: ncos_channel::Sender<T>;
+        scope 2 {
+            debug sender => _3;
+            let _6: ncos_channel::Receiver<T>;
+            scope 3 {
+                debug receiver => _6;
+            }
+        }
+    }
+
+    bb0: {
+        _9 = const false;
+        _2 = Inner::<T>::new() -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _1 = Arc::<Inner<T>>::new(move _2) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _9 = const true;
+        _5 = &_1;
+        _4 = <Arc<Inner<T>> as Clone>::clone(move _5) -> [return: bb3, unwind: bb9];
+    }
+
+    bb3: {
+        _3 = ncos_channel::Sender::<T>::new(move _4) -> [return: bb4, unwind: bb9];
+    }
+
+    bb4: {
+        _9 = const false;
+        _7 = move _1;
+        _6 = ncos_channel::Receiver::<T>::new(move _7) -> [return: bb5, unwind: bb6];
+    }
+
+    bb5: {
+        _8 = move _3;
+        _0 = (move _8, move _6);
+        _9 = const false;
+        return;
+    }
+
+    bb6 (cleanup): {
+        drop(_3) -> [return: bb9, unwind terminate(cleanup)];
+    }
+
+    bb7 (cleanup): {
+        resume;
+    }
+
+    bb8 (cleanup): {
+        drop(_1) -> [return: bb7, unwind terminate(cleanup)];
+    }
+
+    bb9 (cleanup): {
+        switchInt(_9) -> [0: bb7, otherwise: bb8];
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:31:1: 31:18>::new() -> Inner<T> {
+    let mut _0: ncos_channel::Inner<T>;
+    let mut _1: std::sync::Mutex<std::option::Option<T>>;
+    let mut _2: std::option::Option<T>;
+    let mut _3: std::sync::atomic::AtomicBool;
+    let mut _4: std::sync::Mutex<std::option::Option<std::task::Waker>>;
+    let mut _5: std::option::Option<std::task::Waker>;
+
+    bb0: {
+        _2 = Option::<T>::None;
+        _1 = Mutex::<Option<T>>::new(move _2) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _3 = <bool as Into<AtomicBool>>::into(const false) -> [return: bb2, unwind: bb4];
+    }
+
+    bb2: {
+        _5 = Option::<Waker>::None;
+        _4 = Mutex::<Option<Waker>>::new(move _5) -> [return: bb3, unwind: bb4];
+    }
+
+    bb3: {
+        _0 = Inner::<T> { data: move _1, complete: move _3, rx_task: move _4 };
+        return;
+    }
+
+    bb4 (cleanup): {
+        drop(_1) -> [return: bb5, unwind terminate(cleanup)];
+    }
+
+    bb5 (cleanup): {
+        resume;
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:41:1: 41:21>::new(_1: Arc<Inner<T>>) -> ncos_channel::Receiver<T> {
+    debug inner => _1;
+    let mut _0: ncos_channel::Receiver<T>;
+
+    bb0: {
+        _0 = ncos_channel::Receiver::<T> { inner: move _1 };
+        return;
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:47:1: 47:19>::new(_1: Arc<Inner<T>>) -> ncos_channel::Sender<T> {
+    debug inner => _1;
+    let mut _0: ncos_channel::Sender<T>;
+
+    bb0: {
+        _0 = ncos_channel::Sender::<T> { inner: move _1 };
+        return;
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:53:1: 53:32>::poll(_1: Pin<&mut ncos_channel::Receiver<T>>, _2: &mut Context<'_>) -> Poll<T> {
+    debug self => _1;
+    debug cx => _2;
+    let mut _0: std::task::Poll<T>;
+    let _3: &ncos_channel::Inner<T>;
+    let mut _4: &std::sync::Arc<ncos_channel::Inner<T>>;
+    let _5: &ncos_channel::Receiver<T>;
+    let mut _6: &std::pin::Pin<&mut ncos_channel::Receiver<T>>;
+    let mut _7: &std::task::Context<'_>;
+
+    bb0: {
+        _6 = &_1;
+        _5 = <Pin<&mut ncos_channel::Receiver<T>> as Deref>::deref(move _6) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _4 = &((*_5).0: std::sync::Arc<ncos_channel::Inner<T>>);
+        _3 = <Arc<Inner<T>> as Deref>::deref(move _4) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _7 = &(*_2);
+        _0 = Inner::<T>::recv(_3, move _7) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        return;
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:61:1: 61:19>::send(_1: &ncos_channel::Sender<T>, _2: T) -> Result<(), T> {
+    debug self => _1;
+    debug t => _2;
+    let mut _0: std::result::Result<(), T>;
+    let _3: &ncos_channel::Inner<T>;
+    let mut _4: &std::sync::Arc<ncos_channel::Inner<T>>;
+    let mut _5: T;
+    let mut _6: bool;
+
+    bb0: {
+        _6 = const false;
+        _6 = const true;
+        _4 = &((*_1).0: std::sync::Arc<ncos_channel::Inner<T>>);
+        _3 = <Arc<Inner<T>> as Deref>::deref(move _4) -> [return: bb1, unwind: bb5];
+    }
+
+    bb1: {
+        _6 = const false;
+        _5 = move _2;
+        _0 = Inner::<T>::send(_3, move _5) -> [return: bb2, unwind: bb5];
+    }
+
+    bb2: {
+        return;
+    }
+
+    bb3 (cleanup): {
+        resume;
+    }
+
+    bb4 (cleanup): {
+        drop(_2) -> [return: bb3, unwind terminate(cleanup)];
+    }
+
+    bb5 (cleanup): {
+        switchInt(_6) -> [0: bb3, otherwise: bb4];
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::recv(_1: &Inner<T>, _2: &Context<'_>) -> Poll<T> {
+    debug self => _1;
+    debug cx => _2;
+    let mut _0: std::task::Poll<T>;
+    let _3: bool;
+    let mut _4: bool;
+    let mut _5: &std::sync::atomic::AtomicBool;
+    let mut _6: std::sync::atomic::Ordering;
+    let _7: std::task::Waker;
+    let _8: &std::task::Waker;
+    let mut _9: std::result::Result<std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>, std::sync::TryLockError<std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>>>;
+    let mut _10: &std::sync::Mutex<std::option::Option<std::task::Waker>>;
+    let mut _11: isize;
+    let mut _13: std::option::Option<std::task::Waker>;
+    let mut _14: std::task::Waker;
+    let mut _15: &mut std::option::Option<std::task::Waker>;
+    let mut _16: &mut std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>;
+    let mut _17: bool;
+    let mut _18: bool;
+    let mut _19: &std::sync::atomic::AtomicBool;
+    let mut _20: std::sync::atomic::Ordering;
+    let mut _21: std::result::Result<std::sync::MutexGuard<'_, std::option::Option<T>>, std::sync::TryLockError<std::sync::MutexGuard<'_, std::option::Option<T>>>>;
+    let mut _22: &std::sync::Mutex<std::option::Option<T>>;
+    let mut _23: isize;
+    let mut _26: &mut std::option::Option<T>;
+    let mut _27: &mut std::sync::MutexGuard<'_, std::option::Option<T>>;
+    let mut _28: isize;
+    let _30: !;
+    let mut _31: std::fmt::Arguments<'_>;
+    let mut _32: &[&str];
+    let mut _33: &[core::fmt::rt::Argument<'_>];
+    let _34: &[core::fmt::rt::Argument<'_>; 0];
+    let _35: [core::fmt::rt::Argument<'_>; 0];
+    let _36: !;
+    let mut _37: std::fmt::Arguments<'_>;
+    let mut _38: &[&str];
+    let mut _39: &[core::fmt::rt::Argument<'_>];
+    let _40: &[core::fmt::rt::Argument<'_>; 0];
+    let _41: [core::fmt::rt::Argument<'_>; 0];
+    let _42: ();
+    let mut _43: std::fmt::Arguments<'_>;
+    let mut _44: &[&str];
+    let mut _48: bool;
+    let mut _49: bool;
+    let mut _50: isize;
+    let mut _51: isize;
+    let mut _52: isize;
+    let mut _53: isize;
+    scope 1 {
+        debug done => _3;
+        let mut _24: std::sync::MutexGuard<'_, std::option::Option<T>>;
+        let mut _45: &[&str; 1];
+        let mut _47: &[&str; 1];
+        scope 4 {
+            debug d => _24;
+            let _25: std::option::Option<T>;
+            scope 5 {
+                debug data => _25;
+                let _29: T;
+                let mut _46: &[&str; 1];
+                scope 6 {
+                    debug data => _29;
+                }
+            }
+        }
+    }
+    scope 2 {
+        debug task => _7;
+        let mut _12: std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>;
+        scope 3 {
+            debug rx_task => _12;
+        }
+    }
+
+    bb0: {
+        _48 = const false;
+        _49 = const false;
+        _5 = &((*_1).1: std::sync::atomic::AtomicBool);
+        _6 = SeqCst;
+        _4 = AtomicBool::load(move _5, move _6) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        switchInt(move _4) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        _3 = const true;
+        goto -> bb14;
+    }
+
+    bb3: {
+        _8 = Context::<'_>::waker(_2) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _48 = const true;
+        _7 = <Waker as Clone>::clone(_8) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        _10 = &((*_1).2: std::sync::Mutex<std::option::Option<std::task::Waker>>);
+        _9 = Mutex::<Option<Waker>>::try_lock(move _10) -> [return: bb6, unwind: bb36];
+    }
+
+    bb6: {
+        _11 = discriminant(_9);
+        switchInt(move _11) -> [0: bb9, 1: bb8, otherwise: bb7];
+    }
+
+    bb7: {
+        unreachable;
+    }
+
+    bb8: {
+        _3 = const true;
+        goto -> bb39;
+    }
+
+    bb9: {
+        _12 = move ((_9 as Ok).0: std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>);
+        _48 = const false;
+        _14 = move _7;
+        _49 = const true;
+        _13 = Option::<Waker>::Some(move _14);
+        _16 = &mut _12;
+        _15 = <MutexGuard<'_, Option<Waker>> as DerefMut>::deref_mut(move _16) -> [return: bb10, unwind: bb45];
+    }
+
+    bb10: {
+        drop((*_15)) -> [return: bb11, unwind: bb12];
+    }
+
+    bb11: {
+        _49 = const false;
+        (*_15) = move _13;
+        _49 = const false;
+        _3 = const false;
+        drop(_12) -> [return: bb39, unwind: bb47];
+    }
+
+    bb12 (cleanup): {
+        _49 = const false;
+        (*_15) = move _13;
+        goto -> bb45;
+    }
+
+    bb13: {
+        _48 = const false;
+        _50 = discriminant(_9);
+        switchInt(move _50) -> [0: bb14, 1: bb40, otherwise: bb7];
+    }
+
+    bb14: {
+        _17 = _3;
+        switchInt(move _17) -> [0: bb15, otherwise: bb17];
+    }
+
+    bb15: {
+        _19 = &((*_1).1: std::sync::atomic::AtomicBool);
+        _20 = SeqCst;
+        _18 = AtomicBool::load(move _19, move _20) -> [return: bb16, unwind continue];
+    }
+
+    bb16: {
+        switchInt(move _18) -> [0: bb30, otherwise: bb17];
+    }
+
+    bb17: {
+        _22 = &((*_1).0: std::sync::Mutex<std::option::Option<T>>);
+        _21 = Mutex::<Option<T>>::try_lock(move _22) -> [return: bb18, unwind continue];
+    }
+
+    bb18: {
+        _23 = discriminant(_21);
+        switchInt(move _23) -> [0: bb20, 1: bb19, otherwise: bb7];
+    }
+
+    bb19: {
+        _45 = const ncos_channel::Inner::<T>::recv::promoted[0];
+        _38 = _45 as &[&str] (PointerCoercion(Unsize));
+        _41 = core::fmt::rt::Argument::<'_>::none() -> [return: bb28, unwind: bb43];
+    }
+
+    bb20: {
+        _24 = move ((_21 as Ok).0: std::sync::MutexGuard<'_, std::option::Option<T>>);
+        _27 = &mut _24;
+        _26 = <MutexGuard<'_, Option<T>> as DerefMut>::deref_mut(move _27) -> [return: bb21, unwind: bb34];
+    }
+
+    bb21: {
+        _25 = Option::<T>::take(_26) -> [return: bb22, unwind: bb34];
+    }
+
+    bb22: {
+        _28 = discriminant(_25);
+        switchInt(move _28) -> [0: bb23, 1: bb24, otherwise: bb7];
+    }
+
+    bb23: {
+        _46 = const ncos_channel::Inner::<T>::recv::promoted[1];
+        _32 = _46 as &[&str] (PointerCoercion(Unsize));
+        _35 = core::fmt::rt::Argument::<'_>::none() -> [return: bb25, unwind: bb34];
+    }
+
+    bb24: {
+        _29 = move ((_25 as Some).0: T);
+        _0 = Poll::<T>::Ready(move _29);
+        drop(_24) -> [return: bb27, unwind: bb43];
+    }
+
+    bb25: {
+        _34 = &_35;
+        _33 = _34 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize));
+        _31 = Arguments::<'_>::new_v1(move _32, move _33) -> [return: bb26, unwind: bb34];
+    }
+
+    bb26: {
+        _30 = panic_fmt(move _31) -> bb34;
+    }
+
+    bb27: {
+        _51 = discriminant(_21);
+        switchInt(move _51) -> [0: bb33, 1: bb41, otherwise: bb7];
+    }
+
+    bb28: {
+        _40 = &_41;
+        _39 = _40 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize));
+        _37 = Arguments::<'_>::new_v1(move _38, move _39) -> [return: bb29, unwind: bb43];
+    }
+
+    bb29: {
+        _36 = panic_fmt(move _37) -> bb43;
+    }
+
+    bb30: {
+        _47 = const ncos_channel::Inner::<T>::recv::promoted[2];
+        _44 = _47 as &[&str] (PointerCoercion(Unsize));
+        _43 = Arguments::<'_>::new_const(move _44) -> [return: bb31, unwind continue];
+    }
+
+    bb31: {
+        _42 = _print(move _43) -> [return: bb32, unwind continue];
+    }
+
+    bb32: {
+        _0 = Poll::<T>::Pending;
+        goto -> bb33;
+    }
+
+    bb33: {
+        return;
+    }
+
+    bb34 (cleanup): {
+        drop(_24) -> [return: bb43, unwind terminate(cleanup)];
+    }
+
+    bb35 (cleanup): {
+        drop(_12) -> [return: bb47, unwind terminate(cleanup)];
+    }
+
+    bb36 (cleanup): {
+        drop(_7) -> [return: bb37, unwind terminate(cleanup)];
+    }
+
+    bb37 (cleanup): {
+        resume;
+    }
+
+    bb38: {
+        drop(_7) -> [return: bb13, unwind: bb47];
+    }
+
+    bb39: {
+        switchInt(_48) -> [0: bb13, otherwise: bb38];
+    }
+
+    bb40: {
+        drop(_9) -> [return: bb14, unwind continue];
+    }
+
+    bb41: {
+        drop(_21) -> [return: bb33, unwind continue];
+    }
+
+    bb42 (cleanup): {
+        drop(_21) -> [return: bb37, unwind terminate(cleanup)];
+    }
+
+    bb43 (cleanup): {
+        _52 = discriminant(_21);
+        switchInt(move _52) -> [0: bb37, otherwise: bb42];
+    }
+
+    bb44 (cleanup): {
+        drop(_13) -> [return: bb35, unwind terminate(cleanup)];
+    }
+
+    bb45 (cleanup): {
+        switchInt(_49) -> [0: bb35, otherwise: bb44];
+    }
+
+    bb46 (cleanup): {
+        drop(_9) -> [return: bb37, unwind terminate(cleanup)];
+    }
+
+    bb47 (cleanup): {
+        _53 = discriminant(_9);
+        switchInt(move _53) -> [0: bb37, otherwise: bb46];
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::recv::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "internal error: entered unreachable code: recv@2"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::recv::promoted[1]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "internal error: entered unreachable code: recv@1"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::recv::promoted[2]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "receiver pending\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+fn ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::send(_1: &Inner<T>, _2: T) -> Result<(), T> {
+    debug self => _1;
+    debug t => _2;
+    let mut _0: std::result::Result<(), T>;
+    let mut _3: bool;
+    let mut _4: &std::sync::atomic::AtomicBool;
+    let mut _5: std::sync::atomic::Ordering;
+    let mut _6: T;
+    let mut _7: std::result::Result<std::sync::MutexGuard<'_, std::option::Option<T>>, std::sync::TryLockError<std::sync::MutexGuard<'_, std::option::Option<T>>>>;
+    let mut _8: &std::sync::Mutex<std::option::Option<T>>;
+    let mut _9: isize;
+    let mut _10: std::sync::MutexGuard<'_, std::option::Option<T>>;
+    let mut _11: bool;
+    let _12: &std::option::Option<T>;
+    let mut _13: &std::sync::MutexGuard<'_, std::option::Option<T>>;
+    let mut _14: !;
+    let mut _15: std::option::Option<T>;
+    let mut _16: T;
+    let mut _17: &mut std::option::Option<T>;
+    let mut _18: &mut std::sync::MutexGuard<'_, std::option::Option<T>>;
+    let _19: !;
+    let mut _20: std::fmt::Arguments<'_>;
+    let mut _21: &[&str];
+    let mut _22: &[core::fmt::rt::Argument<'_>];
+    let _23: &[core::fmt::rt::Argument<'_>; 0];
+    let _24: [core::fmt::rt::Argument<'_>; 0];
+    let _25: ();
+    let mut _26: &std::sync::atomic::AtomicBool;
+    let mut _27: std::sync::atomic::Ordering;
+    let mut _28: std::result::Result<std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>, std::sync::TryLockError<std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>>>;
+    let mut _29: &std::sync::Mutex<std::option::Option<std::task::Waker>>;
+    let mut _30: isize;
+    let mut _31: std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>;
+    let mut _33: &mut std::option::Option<std::task::Waker>;
+    let mut _34: &mut std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>;
+    let mut _35: isize;
+    let _37: ();
+    let mut _38: std::fmt::Arguments<'_>;
+    let mut _39: &[&str];
+    let _40: ();
+    let mut _41: std::task::Waker;
+    let _42: !;
+    let mut _43: std::fmt::Arguments<'_>;
+    let mut _44: &[&str];
+    let mut _45: &[core::fmt::rt::Argument<'_>];
+    let _46: &[core::fmt::rt::Argument<'_>; 0];
+    let _47: [core::fmt::rt::Argument<'_>; 0];
+    let mut _48: &[&str; 1];
+    let mut _49: &[&str; 1];
+    let mut _51: bool;
+    let mut _52: bool;
+    let mut _53: bool;
+    let mut _54: bool;
+    let mut _55: isize;
+    let mut _56: isize;
+    let mut _57: isize;
+    let mut _58: isize;
+    let mut _59: isize;
+    scope 1 {
+        debug data => _10;
+    }
+    scope 2 {
+        debug rx_task => _31;
+        let _32: std::option::Option<std::task::Waker>;
+        scope 3 {
+            debug rx => _32;
+            scope 4 {
+                debug w => _36;
+                let _36: std::task::Waker;
+                let mut _50: &[&str; 1];
+            }
+        }
+    }
+
+    bb0: {
+        _54 = const false;
+        _53 = const false;
+        _52 = const false;
+        _51 = const false;
+        _54 = const true;
+        _4 = &((*_1).1: std::sync::atomic::AtomicBool);
+        _5 = SeqCst;
+        _3 = AtomicBool::load(move _4, move _5) -> [return: bb1, unwind: bb52];
+    }
+
+    bb1: {
+        switchInt(move _3) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        _54 = const false;
+        _6 = move _2;
+        _0 = Result::<(), T>::Err(move _6);
+        goto -> bb31;
+    }
+
+    bb3: {
+        _8 = &((*_1).0: std::sync::Mutex<std::option::Option<T>>);
+        _7 = Mutex::<Option<T>>::try_lock(move _8) -> [return: bb4, unwind: bb52];
+    }
+
+    bb4: {
+        _9 = discriminant(_7);
+        switchInt(move _9) -> [0: bb7, 1: bb6, otherwise: bb5];
+    }
+
+    bb5: {
+        unreachable;
+    }
+
+    bb6: {
+        _48 = const ncos_channel::Inner::<T>::send::promoted[0];
+        _21 = _48 as &[&str] (PointerCoercion(Unsize));
+        _24 = core::fmt::rt::Argument::<'_>::none() -> [return: bb16, unwind: bb50];
+    }
+
+    bb7: {
+        _10 = move ((_7 as Ok).0: std::sync::MutexGuard<'_, std::option::Option<T>>);
+        _13 = &_10;
+        _12 = <MutexGuard<'_, Option<T>> as Deref>::deref(move _13) -> [return: bb8, unwind: bb33];
+    }
+
+    bb8: {
+        _11 = Option::<T>::is_none(_12) -> [return: bb9, unwind: bb33];
+    }
+
+    bb9: {
+        switchInt(move _11) -> [0: bb11, otherwise: bb10];
+    }
+
+    bb10: {
+        _54 = const false;
+        _16 = move _2;
+        _53 = const true;
+        _15 = Option::<T>::Some(move _16);
+        _18 = &mut _10;
+        _17 = <MutexGuard<'_, Option<T>> as DerefMut>::deref_mut(move _18) -> [return: bb12, unwind: bb48];
+    }
+
+    bb11: {
+        _14 = core::panicking::panic(const "assertion failed: data.is_none()") -> bb33;
+    }
+
+    bb12: {
+        drop((*_17)) -> [return: bb13, unwind: bb14];
+    }
+
+    bb13: {
+        _53 = const false;
+        (*_17) = move _15;
+        _53 = const false;
+        drop(_10) -> [return: bb15, unwind: bb50];
+    }
+
+    bb14 (cleanup): {
+        _53 = const false;
+        (*_17) = move _15;
+        goto -> bb48;
+    }
+
+    bb15: {
+        _55 = discriminant(_7);
+        switchInt(move _55) -> [0: bb35, 1: bb36, otherwise: bb5];
+    }
+
+    bb16: {
+        _23 = &_24;
+        _22 = _23 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize));
+        _20 = Arguments::<'_>::new_v1(move _21, move _22) -> [return: bb17, unwind: bb50];
+    }
+
+    bb17: {
+        _19 = panic_fmt(move _20) -> bb50;
+    }
+
+    bb18: {
+        _29 = &((*_1).2: std::sync::Mutex<std::option::Option<std::task::Waker>>);
+        _28 = Mutex::<Option<Waker>>::try_lock(move _29) -> [return: bb19, unwind: bb52];
+    }
+
+    bb19: {
+        _30 = discriminant(_28);
+        switchInt(move _30) -> [0: bb21, 1: bb20, otherwise: bb5];
+    }
+
+    bb20: {
+        _49 = const ncos_channel::Inner::<T>::send::promoted[1];
+        _44 = _49 as &[&str] (PointerCoercion(Unsize));
+        _47 = core::fmt::rt::Argument::<'_>::none() -> [return: bb29, unwind: bb46];
+    }
+
+    bb21: {
+        _31 = move ((_28 as Ok).0: std::sync::MutexGuard<'_, std::option::Option<std::task::Waker>>);
+        _34 = &mut _31;
+        _33 = <MutexGuard<'_, Option<Waker>> as DerefMut>::deref_mut(move _34) -> [return: bb22, unwind: bb32];
+    }
+
+    bb22: {
+        _32 = Option::<Waker>::take(_33) -> [return: bb23, unwind: bb32];
+    }
+
+    bb23: {
+        _51 = const true;
+        _35 = discriminant(_32);
+        switchInt(move _35) -> [1: bb24, otherwise: bb40];
+    }
+
+    bb24: {
+        _51 = const false;
+        _52 = const true;
+        _36 = move ((_32 as Some).0: std::task::Waker);
+        _50 = const ncos_channel::Inner::<T>::send::promoted[2];
+        _39 = _50 as &[&str] (PointerCoercion(Unsize));
+        _38 = Arguments::<'_>::new_const(move _39) -> [return: bb25, unwind: bb44];
+    }
+
+    bb25: {
+        _37 = _print(move _38) -> [return: bb26, unwind: bb44];
+    }
+
+    bb26: {
+        _52 = const false;
+        _41 = move _36;
+        _40 = Waker::wake(move _41) -> [return: bb27, unwind: bb44];
+    }
+
+    bb27: {
+        _52 = const false;
+        goto -> bb40;
+    }
+
+    bb28: {
+        _57 = discriminant(_28);
+        switchInt(move _57) -> [0: bb41, 1: bb42, otherwise: bb5];
+    }
+
+    bb29: {
+        _46 = &_47;
+        _45 = _46 as &[core::fmt::rt::Argument<'_>] (PointerCoercion(Unsize));
+        _43 = Arguments::<'_>::new_v1(move _44, move _45) -> [return: bb30, unwind: bb46];
+    }
+
+    bb30: {
+        _42 = panic_fmt(move _43) -> bb46;
+    }
+
+    bb31: {
+        return;
+    }
+
+    bb32 (cleanup): {
+        drop(_31) -> [return: bb46, unwind terminate(cleanup)];
+    }
+
+    bb33 (cleanup): {
+        drop(_10) -> [return: bb50, unwind terminate(cleanup)];
+    }
+
+    bb34 (cleanup): {
+        resume;
+    }
+
+    bb35: {
+        _26 = &((*_1).1: std::sync::atomic::AtomicBool);
+        _27 = SeqCst;
+        _25 = AtomicBool::store(move _26, const true, move _27) -> [return: bb18, unwind: bb52];
+    }
+
+    bb36: {
+        drop(_7) -> [return: bb35, unwind: bb52];
+    }
+
+    bb37: {
+        _51 = const false;
+        drop(_31) -> [return: bb28, unwind: bb46];
+    }
+
+    bb38: {
+        switchInt(_51) -> [0: bb37, otherwise: bb39];
+    }
+
+    bb39: {
+        drop(((_32 as Some).0: std::task::Waker)) -> [return: bb37, unwind: bb32];
+    }
+
+    bb40: {
+        _56 = discriminant(_32);
+        switchInt(move _56) -> [1: bb38, 0: bb37, otherwise: bb5];
+    }
+
+    bb41: {
+        _0 = Result::<(), T>::Ok(const ());
+        goto -> bb31;
+    }
+
+    bb42: {
+        drop(_28) -> [return: bb41, unwind: bb52];
+    }
+
+    bb43 (cleanup): {
+        drop(_36) -> [return: bb32, unwind terminate(cleanup)];
+    }
+
+    bb44 (cleanup): {
+        switchInt(_52) -> [0: bb32, otherwise: bb43];
+    }
+
+    bb45 (cleanup): {
+        drop(_28) -> [return: bb52, unwind terminate(cleanup)];
+    }
+
+    bb46 (cleanup): {
+        _58 = discriminant(_28);
+        switchInt(move _58) -> [0: bb52, otherwise: bb45];
+    }
+
+    bb47 (cleanup): {
+        drop(_15) -> [return: bb33, unwind terminate(cleanup)];
+    }
+
+    bb48 (cleanup): {
+        switchInt(_53) -> [0: bb33, otherwise: bb47];
+    }
+
+    bb49 (cleanup): {
+        drop(_7) -> [return: bb52, unwind terminate(cleanup)];
+    }
+
+    bb50 (cleanup): {
+        _59 = discriminant(_7);
+        switchInt(move _59) -> [0: bb52, otherwise: bb49];
+    }
+
+    bb51 (cleanup): {
+        drop(_2) -> [return: bb34, unwind terminate(cleanup)];
+    }
+
+    bb52 (cleanup): {
+        switchInt(_54) -> [0: bb34, otherwise: bb51];
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::send::promoted[0]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "internal error: entered unreachable code: send@1"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::send::promoted[1]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "internal error: entered unreachable code: send@2"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const ncos_channel::<impl at src/ncos_channel.rs:68:1: 68:17>::send::promoted[2]: &[&str; 1] = {
+    let mut _0: &[&str; 1];
+    let mut _1: [&str; 1];
+
+    bb0: {
+        _1 = [const "wake up rx_task\n"];
+        _0 = &_1;
+        return;
+    }
+}

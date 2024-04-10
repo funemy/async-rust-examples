@@ -7,11 +7,15 @@ use smol::{block_on, Executor};
 static EX: Executor<'_> = Executor::new();
 
 fn sending(s : Sender<String>) {
-    let _ = s.send("1111111111111111111".to_owned());
-    println!("data sent to channel")
+    let res = s.send("1111111111111111111".to_owned());
+    match res {
+        Ok(_) => println!("data sent to channel"),
+        Err(_) => println!("channel cancelled")
+    }
 }
 
-async fn receiving(r : Receiver<String>) {
+async fn receiving(mut r : Receiver<String>) {
+    r.close();
     let d = r.await;
     if let Ok(dd) = d {
         println!("data: {}", dd);
@@ -21,7 +25,7 @@ async fn receiving(r : Receiver<String>) {
 }
 
 async fn example () {
-    let (s, r) = oneshot::channel();
+    let (s, mut r) = oneshot::channel();
     let t = EX.spawn(receiving(r));
     sending(s);
     t.await

@@ -66,22 +66,10 @@ impl <T> Sender<T> {
 
 // NOTE: The REALLY important stuff
 impl <T>Inner<T> {
-    // ready condition:
-    //  (done \/ self.complete == true) /\
-    //  owner(self.data.lock) == true /\
-    //  is_some(data) == true
-
-    // Negative reasoning:
-    // 1. Exists Ready-returning path? -- Yes, with also with "ready condition"
-    // 2. For all Pending-returning paths, have gen(wake) -- Yes, if Pending is returned, `done` must be false, AND `complete` must be false, therefore rx_task must be set.
-    // 3. consume(wake) definitely happen after gen(wake) -- Yes, by tracking `complete`, which is read/write in a SeqCst way, gen(wake) always happen before consume(wake),
-    //    AND if gen(wake) exists, consume(wake) must also exists
-    // 4. consume(wake) is on a path that must satisfy the path condition of Ready-returning path. -- Yes, because `complete` is set to true before consume(wake)
     fn recv(self: &Self, cx: &Context<'_>) -> Poll<T> {
         let done = if self.complete.load(SeqCst) {
             true
         } else {
-            thread::sleep(Duration::from_secs(4));
             let task = cx.waker().clone();
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
