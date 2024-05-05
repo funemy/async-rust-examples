@@ -1,6 +1,8 @@
 use std::{sync::atomic::AtomicBool, pin::Pin, future::Future, sync::atomic::Ordering::SeqCst, sync::Mutex, task::{Context, Poll, Waker}, sync::Arc, thread};
 use std::time::Duration;
 
+use raven_spec::*;
+
 pub fn channel<T>() -> (Sender<T>, Receiver<T>) {
     let inner = Arc::new(Inner::new());
     let sender = Sender::new(inner.clone());
@@ -64,10 +66,14 @@ impl <T> Sender<T> {
     }
 }
 
+event_decl!(e1, "event 1");
+event_decl!(e2, "event 2");
+
 // NOTE: The REALLY important stuff
 impl <T>Inner<T> {
+    #[raven::eventually_complete]
     fn recv(self: &Self, cx: &Context<'_>) -> Poll<T> {
-        let done = if self.complete.load(SeqCst) {
+        let done = if e1_obs!(self.complete.load(SeqCst)) {
             true
         } else {
             let task = cx.waker().clone();
