@@ -66,20 +66,20 @@ impl <T> Sender<T> {
     }
 }
 
-event_decl!(e1, "event 1");
-event_decl!(e2, "event 2");
+event_decl!(e1, "self.complete is set to true");
+event_decl!(e2, "self.rx_task is set to the current task");
 
 // NOTE: The REALLY important stuff
 impl <T>Inner<T> {
     #[raven::eventually_complete]
     fn recv(self: &Self, cx: &Context<'_>) -> Poll<T> {
-        let done = if e1_obs!(self.complete.load(SeqCst)) {
+        let done = if e1_obs!( self.complete.load(SeqCst) ) {
             true
         } else {
             let task = cx.waker().clone();
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
-                    *rx_task = Some(task);
+                    e2!( *rx_task = Some(task) );
                     // NOTE: this can trigger "send@2"
                     // thread::sleep(Duration::from_secs(3));
                     false
@@ -88,7 +88,7 @@ impl <T>Inner<T> {
             }
         };
 
-        if done || self.complete.load(SeqCst) {
+        if done || e1_obs!( self.complete.load(SeqCst) ) {
             match self.data.try_lock() {
                 Ok(mut d) => {
                     let data = d.take();
