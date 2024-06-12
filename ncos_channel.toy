@@ -1,0 +1,56 @@
+struct Channel {
+  data: Option<T>
+  // complete is a monotonic bool variable
+  // who is initialized to false and is only
+  // allowed to be updated to true
+  complete: MBool,
+  rx_task: Option<Waker>
+}
+
+spec (ch: Channel, w: Waker(ch)) {
+  event e1 {
+    trigger set_complete() {
+      ch.complete = true
+    }
+
+    observe chk_complete() -> MBool {
+      return ch.complete
+    }
+  }
+
+  event e2 {
+    trigger set_rx_task() {
+      ch.rx_task = Some(w)
+    }
+
+    observe chk_rx_task() -> MBool {
+      match ch.rx_task {
+        Some(_) => true,
+        _ => false
+      }
+    }
+  }
+}
+
+fn recv(ch: Channel, w: Waker) -> Poll {
+  set_rx_task(ch)
+
+  if chk_complete() {
+    Poll::Ready(d.unwrap()),
+  } else {
+    return Poll::Pending
+  }
+}
+
+fn send(ch: Channel, d: T) {
+  if chk_complete() {
+    return
+  }
+
+  ch.data = Some(d)
+  set_complete(
+
+  if chk_rx_task() {
+    ch.rx_task.unwrap().wake()
+  }
+}

@@ -2,3 +2,5 @@
 #![register_tool(raven)]
 pub mod counter;
 pub mod ncos_channel;
+// pub mod ncos_channel_bad;
+// pub mod ncos_channel_bad2;

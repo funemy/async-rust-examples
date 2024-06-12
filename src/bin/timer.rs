@@ -26,12 +26,6 @@ struct SharedState {
     waker: Option<Waker>,
 }
 
-// Prop of Futures/Tasks
-// forall T : Task . exist deps : Seq[Task] .
-//  forall i j : Int . 0 <= i < j <= len(deps) . !done(deps(i)) => !done(deps(j)) & awaited
-//  & (forall t in deps . done(t)) ~> done(T)
-// TODO: 2. awaited(t) -- whether a task is being awaited, i.e., calling `t.await`
-// NOTE: Future Actor
 impl Future for Timer {
     // No return value when the timer finishes
     type Output = ();
@@ -54,7 +48,6 @@ impl Future for Timer {
     }
 }
 
-// NOTE: Timer Actor
 impl Timer {
     // Constructor for Timer
     pub fn new(duration: Duration) -> Self {
@@ -133,17 +126,6 @@ impl Executor {
         }
     }
 
-    // Prop 1 (Executor::run)
-    // forall t : Task . ex : Executor .
-    //  scheduled(t) ~> t.poll(cx)
-    //      where cx : Context . cx.wake() & awaited(t) ~> t.poll(cx)
-    //
-    // Intuitively, the property above captures the essential behavior of Executor::run for guaranteeing task responsiveness.
-    // To verify this, we need to futher define the two conditions:
-    // 1. scheduled(t) -- t is in the active queue of the executor.
-    //    To concretely define this, we need to specify what is the "active queue" and what it means for a task to "be in the active queue".
-    //
-    // This naive Executor handles tasks one-by-one from the task queue.
     fn run(mut self) {
         self.task_sender.take();
         // Receive the next pending task from the ready queue
@@ -166,10 +148,6 @@ impl Executor {
         }
     }
 
-    // Prop 2 (Executor::spawn)
-    // forall t : Task .
-    //  spawn(t) ~> scheuled(t)
-    //
     // An interface for spwaning tasks
     fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
         // Make Rust's type system happy
