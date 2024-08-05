@@ -32,6 +32,9 @@ spec (ch: Channel, w: Waker(ch)) {
   }
 }
 
+#[eventually_complete]
+#[pending_when( e2 <: e1 )]
+#[woken_up_by( send )]
 fn recv(ch: Channel, w: Waker) -> Poll {
   set_rx_task(ch)
 
@@ -48,7 +51,7 @@ fn send(ch: Channel, d: T) {
   }
 
   ch.data = Some(d)
-  set_complete(
+  set_complete()
 
   if chk_rx_task() {
     ch.rx_task.unwrap().wake()

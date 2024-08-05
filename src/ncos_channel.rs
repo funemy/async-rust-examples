@@ -71,8 +71,8 @@ event_decl!(e2, "self.rx_task is (first) set to the current task");
 
 // NOTE: The REALLY important stuff
 impl <T>Inner<T> {
-    #[raven::eventually_complete]
     // #[raven::delegate( e2 <: e1 )]?
+    #[raven::eventually_complete]
     #[raven::transfer_cond( e2 <: e1 )] // <: -> preceeds? / wins-against
     #[raven::woken_up_by( ncos_send )]
     fn recv(&self, cx: &Context<'_>) -> Poll<T> {
