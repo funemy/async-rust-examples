@@ -1,7 +1,9 @@
-#![feature(register_tool)]
-#![register_tool(raven)]
-#![feature(stmt_expr_attributes)]
+#![allow(dead_code)]
+// #![feature(register_tool)]
+// #![register_tool(raven)]
+// #![feature(stmt_expr_attributes)]
 
+use crate::repo::{RVec, Repo};
 use futures::{
     future::{BoxFuture, FutureExt},
     task::{waker_ref, ArcWake},
@@ -9,50 +11,40 @@ use futures::{
 use std::{
     future::Future,
     pin::Pin,
-    sync::mpsc::{sync_channel, Receiver, SyncSender},
-    sync::{Arc, Mutex},
+    sync::{
+        mpsc::{sync_channel, Receiver, SyncSender},
+        Arc, Mutex, OnceLock,
+    },
     task::{Context, Poll, Waker},
-    thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
-
-use raven_macros::*;
 
 // Timer interface
 // Timer has a shared state for communication between the main thread and the timer thread
 pub struct Timer {
-    shared_state: Arc<Mutex<SharedState>>,
+    instant: Instant,
 }
 
-// Timer's shared state
-// completed: the flag indicating whether the timer has completed
-// waker: the callback to invoke when timer finishes, so the Executor can poll again on this future (i.e. Timer)
-struct SharedState {
-    completed: bool,
-    waker: Option<Waker>,
+// The state (i.e., responsibility) sent from a Timer to a Reactor.
+#[derive(Clone, Debug)]
+struct Shared {
+    instant: Instant,
+    waker: Waker,
 }
-
-event_decl!(e1, "set state.completed to true, indicating that the timer can be fired.");
 
 impl Future for Timer {
     // No return value when the timer finishes
     type Output = ();
 
-    // The Executor provides a waker implementation in `cx`
-    // #[raven::eventually_complete]
-    #[raven::woken_up_by( timer_new )]
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        // get a mutable ref to the shared_state
-        let mut state = self.shared_state.lock().unwrap();
-        if e1_obs!( state.completed ) {
-            // if the timer has finished
-            // return `Ready`, indicating the future can return from awaiting
+        if self.instant < Instant::now() {
             Poll::Ready(())
         } else {
-            // if not
-            // pass the waker to the shared state (the waker is inited to be `None`, check the constructor of `Timer`)
-            // return `Pending`, indicating the future hasn't finish and will call waker later
-            state.waker = Some(cx.waker().clone());
+            let shared = Shared {
+                instant: self.instant,
+                waker: cx.waker().clone(),
+            };
+            Reactor::insert(shared);
             Poll::Pending
         }
     }
@@ -61,39 +53,13 @@ impl Future for Timer {
 impl Timer {
     // Constructor for Timer
     pub fn new(duration: Duration) -> Self {
-        // Initialize the shared state
-        let shared_state = Arc::new(Mutex::new(SharedState {
-            completed: false,
-            waker: None,
-        }));
-
-        // Make a thread-safe ref to the share state, passing to the timer thread
-        let thread_shared_state = shared_state.clone();
-
-        // Timer thread
-        // Transfer the ownership of `thread_shared_state` to the timer thread
-        // Sleep for the given duration
-        // After the sleep, set the `completed` flag to true
-        // If the waker has been set by the executor, then invoke `waker.wake()` (asking the Executor to poll again)
-        thread::spawn(
-        #[raven::export_as( timer_new )]
-        move || {
-            thread::sleep(duration);
-            println!("timeout!");
-            let mut shared_state = thread_shared_state.lock().unwrap();
-            e1!( shared_state.completed = true );
-            if let Some(waker) = shared_state.waker.take() {
-                waker.wake();
-            }
-        });
-
-        // return the timer future handle
-        Timer { shared_state }
+        let instant = Instant::now() + duration;
+        Timer { instant }
     }
 }
 
 // Executor for Timer
-// The task queue of the executor is modelled by a channel.
+// The task queue of the executor is modeled by a channel.
 // When scheduling a task, the `spawn` function send the given task into the channel
 // (therefore the task stays in the buffer of the channel)
 struct Executor {
@@ -101,6 +67,46 @@ struct Executor {
     ready_queue: Receiver<Arc<Task>>,
 
     task_sender: Option<SyncSender<Arc<Task>>>,
+}
+
+struct Reactor {
+    wakers: Arc<Mutex<RVec<Shared>>>,
+}
+
+impl Reactor {
+    fn new() -> Self {
+        Self {
+            wakers: Arc::new(Mutex::new(RVec::default())),
+        }
+    }
+
+    fn get() -> &'static Self {
+        static REACTOR: OnceLock<Reactor> = OnceLock::new();
+        REACTOR.get_or_init(|| Reactor::new())
+    }
+
+    fn react(&self) {
+        loop {
+            let mut wakers = self.wakers.lock().unwrap();
+            // println!("wakers: {:?}", wakers);
+            let (ready, pending) = wakers.clone().partition(|s| s.instant < Instant::now());
+            // println!("ready: {:?}", ready);
+
+            for s in ready {
+                s.waker.wake();
+            }
+
+            *wakers = pending;
+        }
+    }
+
+    fn inner_insert(&self, s: Shared) {
+        self.wakers.lock().unwrap().insert(s);
+    }
+
+    fn insert(s: Shared) {
+        Reactor::get().inner_insert(s);
+    }
 }
 
 struct Task {
@@ -174,24 +180,35 @@ impl Executor {
     }
 }
 
-// NOTE:
-// The reason this main function terminates is very tricky
-// Executor:run is in a while-loop, conditioned on `recv`
-// `recv` only returns when all senders are dropped.
-// The components that carry a sender are Executor and all tasks.
-// At the start of `Executor::run`, executor drops its sender.
-// Therefore, the channel will be closed when all tasks are dropped,
-// and then the while-loop will exit and `run`A will return.
-// NOTE:
-// However, this should not affect our proof, since we only want to prove:
-//   whether executor guarantees the responsivenesss of task
-// But not the responsiveness of executor itself.
-fn main() {
-    let executor = Executor::new();
-    executor.spawn(async {
-        println!("Hello");
-        Timer::new(Duration::from_secs(2)).await;
-        println!("Done");
-    });
-    executor.run()
+#[cfg(test)]
+mod test {
+    use super::*;
+    use futures::{executor::block_on, future::join};
+
+    #[test]
+    fn timer_test() {
+        let _ = std::thread::spawn(|| {
+            Reactor::get().react();
+        });
+
+        let executor = Executor::new();
+        executor.spawn(async {
+            println!("Hello1");
+            Timer::new(Duration::from_secs(2)).await;
+            println!("Done1");
+        });
+        executor.spawn(async {
+            println!("Hello2");
+            Timer::new(Duration::from_secs(3)).await;
+            println!("Done2");
+        });
+        block_on(join(
+            async {
+                println!("Hello3");
+                Timer::new(Duration::from_secs(5)).await;
+                println!("Done3");
+            },
+            async { executor.run() },
+        ));
+    }
 }

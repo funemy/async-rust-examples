@@ -10,4 +10,68 @@ futures = "0.3"
 signal-hook = "0.3.17"
 smol = "1.3.0"
 tokio = { version = "1", features = ["full"] }
-raven_spec = { path = "../../raven/crates/spec" }
+raven_macros = { path = "../../raven/crates/macros" }
+
+[[bin]]
+name = "async_channel0"
+test = false
+
+[[bin]]
+name = "async_channel1"
+test = false
+
+[[bin]]
+name = "async_file_read"
+test = false
+
+[[bin]]
+name = "case0"
+test = false
+
+[[bin]]
+name = "case1"
+test = false
+
+[[bin]]
+name = "case2"
+test = false
+
+[[bin]]
+name = "case2x"
+test = false
+
+[[bin]]
+name = "case3"
+test = false
+
+[[bin]]
+name = "casex0"
+test = false
+
+[[bin]]
+name = "casex1"
+test = false
+
+[[bin]]
+name = "casex2"
+test = false
+
+[[bin]]
+name = "iteration"
+test = false
+
+[[bin]]
+name = "learn_sing_dance"
+test = false
+
+[[bin]]
+name = "ncos_channel"
+test = false
+
+[[bin]]
+name = "select"
+test = false
+
+[[bin]]
+name = "timer"
+test = false
