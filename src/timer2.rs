@@ -81,21 +81,31 @@ impl Reactor {
     }
 
     fn get() -> &'static Self {
+        // It is worth noting that, in smol, the global reactor is initialized using a customized
+        // async version of OnceCell, while I used a sync'd version (i.e., `OnceLock`) provided by
+        // the std.
+        // That means, the implementation of the smol async runtime, is actually dependent on a
+        // much smaller async runtime, i.e., the async OnceCell, which further rely on another
+        // crate called `event_listener` (the project is under the smol github org).
+        // AFAICT, `event_listener` is a more lightweight async runtime that at least support
+        // primitives like `OnceCell`.
         static REACTOR: OnceLock<Reactor> = OnceLock::new();
         REACTOR.get_or_init(|| Reactor::new())
     }
 
+    // repo: timer_wakers: Timer
     fn react(&self) {
         loop {
             let mut wakers = self.wakers.lock().unwrap();
-            // println!("wakers: {:?}", wakers);
+            // partition: timer_wakers -> (ready, pending)
             let (ready, pending) = wakers.clone().partition(|s| s.instant < Instant::now());
-            // println!("ready: {:?}", ready);
 
+            // iter: wake
             for s in ready {
                 s.waker.wake();
             }
 
+            // assign: timer_wakers = pending
             *wakers = pending;
         }
     }
@@ -187,6 +197,7 @@ mod test {
 
     #[test]
     fn timer_test() {
+        // we could also use a lazy-static variable to spawn this background thread implicitly
         let _ = std::thread::spawn(|| {
             Reactor::get().react();
         });
@@ -202,6 +213,12 @@ mod test {
             Timer::new(Duration::from_secs(3)).await;
             println!("Done2");
         });
+        // The reason we need a `block(join(...))` here is because `executor.run` is a blocking
+        // call. In order for async tasks managed by the executor to run in parallel with the main
+        // function (i.e., the other half of the `join`), we could either fork a thread for the
+        // executor (then sharing the executor with the main function becomes a problem) or using
+        // the `join` combinator at the end so the main function and the executor could run in
+        // parallel.
         block_on(join(
             async {
                 println!("Hello3");
