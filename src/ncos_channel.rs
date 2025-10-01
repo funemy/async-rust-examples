@@ -94,7 +94,7 @@ impl<T> Inner<T> {
                     false
                 }
                 Err(_) => {
-                    e1_obs_t!();
+                    e1_tt!();
                     true
                 }
             }
@@ -152,9 +152,9 @@ impl<T> Inner<T> {
             Ok(mut rx_task) => {
                 let rx = rx_task.take();
                 if let Some(w) = rx {
-                    e2_obs_t!();
+                    e2_tt!();
                     println!("wake up rx_task");
-                    wake_up!(w.wake());
+                    wake!(w.wake());
                 }
             }
             Err(_) => unreachable!("send@2"),

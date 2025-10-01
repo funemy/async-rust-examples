@@ -49,7 +49,7 @@ impl Future for Timer {
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         // get a mutable ref to the shared_state
         let mut state = self.shared_state.lock().unwrap();
-        if e1_obs!(state.completed) {
+        if state.completed {
             // if the timer has finished
             // return `Ready`, indicating the future can return from awaiting
             Poll::Ready(())
@@ -76,14 +76,24 @@ impl Timer {
         let time = Instant::now() + duration;
 
         thread::spawn(
+            // e1 : time is up
+            // e2 : waker is stored
             #[raven::export_as(timer_loop_new)]
-            move || loop {
+            move || inf_loop! {
+                // println!("time: {:?}, now: {:?}", time, Instant::now());
                 if time <= Instant::now() {
+                    // e1 @ true
                     let mut shared_state = thread_shared_state.lock().unwrap();
+                    shared_state.completed = true;
                     if let Some(waker) = shared_state.waker.take() {
+                        // e2 @ true
                         waker.wake();
+                        // return;
+                    } else {
+                        // e2 @ false
                     }
                 } else {
+                    // e1 @ false
                     continue;
                 }
             },
@@ -192,7 +202,7 @@ fn main() {
     let executor = Executor::new();
     executor.spawn(async {
         println!("Hello");
-        Timer::new_loop(Duration::from_secs(2)).await;
+        Timer::new_loop(Duration::from_secs(1)).await;
         println!("Done");
     });
     executor.run()
