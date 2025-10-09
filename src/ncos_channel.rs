@@ -79,8 +79,8 @@ event_decl!(e2, "self.rx_task is (first) set to the current task");
 // NOTE: The REALLY important stuff
 impl<T> Inner<T> {
     #[raven::pollable(NCOSChannel)]
-    #[raven::pending_when( e2 <: e1 | ncos_send )]
-    #[raven::ready_when(e1)]
+    #[raven::resp_transfer( e2 <: e1 )]
+    #[raven::complete(e1)]
     fn recv(&self, cx: &Context<'_>) -> Poll<T> {
         let done = if e1_obs!(self.complete.load(SeqCst)) {
             true
@@ -88,19 +88,18 @@ impl<T> Inner<T> {
             let task = cx.waker().clone();
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
-                    e2!(*rx_task = Some(task));
+                    *rx_task = Some(task); e2_tt!();
                     // NOTE: this can trigger "send@2"
                     // thread::sleep(Duration::from_secs(3));
                     false
                 }
-                Err(_) => {
-                    e1_tt!();
+                Err(_) => { e1_tt!();
                     true
                 }
             }
         };
 
-        if done || e1_obs!(self.complete.load(SeqCst)) {
+        if done || self.complete.load(SeqCst) { e1_tt!();
             match self.data.try_lock() {
                 Ok(mut d) => {
                     let data = d.take();
@@ -114,14 +113,13 @@ impl<T> Inner<T> {
                 }
                 Err(_) => unreachable!("recv@2"),
             }
-        } else {
+        } else { e1_ff!();
             println!("receiver pending");
             Poll::Pending
         }
     }
 
-    #[raven::function(ncos_send)]
-    #[raven::wake_when(e1 || e2)]
+    // #[raven::reactor(ncos_send: NCOSChannel)]
     fn send(&self, t: T) -> Result<(), T> {
         // prevent re-sending
         if e1_obs!(self.complete.load(SeqCst)) {
