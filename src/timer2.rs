@@ -3,7 +3,7 @@
 // #![register_tool(raven)]
 // #![feature(stmt_expr_attributes)]
 
-use crate::repo::{RVec, Repo};
+use crate::{repo::{RVec, Repo}, verif::*};
 use futures::{
     future::{BoxFuture, FutureExt},
     task::{waker_ref, ArcWake},
@@ -18,6 +18,8 @@ use std::{
     task::{Context, Poll, Waker},
     time::{Duration, Instant},
 };
+
+use raven_macros::*;
 
 // Timer interface
 // Timer has a shared state for communication between the main thread and the timer thread
@@ -94,18 +96,21 @@ impl Reactor {
     }
 
     // repo: timer_wakers: Timer
+    #[raven::reactor(TimerReactor)]
+    #[raven::repo_decl(timers: Timer)]
     fn react(&self) {
-        loop {
+        inf_loop! {
             let mut wakers = self.wakers.lock().unwrap();
-            // partition: timer_wakers -> (ready, pending)
+
+            repo![ @partition: timers -> (ready, pending) | e1 ];
             let (ready, pending) = wakers.clone().partition(|s| s.instant < Instant::now());
 
-            // iter: wake
+            repo![ @wake_all: ready ];
             for s in ready {
                 s.waker.wake();
             }
 
-            // assign: timer_wakers = pending
+            repo![ @merge: timers <- pending ];
             *wakers = pending;
         }
     }

@@ -78,7 +78,7 @@ event_decl!(e2, "self.rx_task is (first) set to the current task");
 
 // NOTE: The REALLY important stuff
 impl<T> Inner<T> {
-    #[raven::pollable(NCOSChannel)]
+    // #[raven::pollable(NCOSChannel)]
     #[raven::resp_transfer( e2 <: e1 )]
     #[raven::complete(e1)]
     fn recv(&self, cx: &Context<'_>) -> Poll<T> {

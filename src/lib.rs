@@ -4,5 +4,6 @@ pub mod counter;
 pub mod ncos_channel;
 pub mod repo;
 pub mod timer2;
+mod verif;
 // pub mod ncos_channel_bad;
 // pub mod ncos_channel_bad2;
