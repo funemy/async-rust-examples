@@ -10,5 +10,8 @@ async fn case0() -> () {
 // #[tokio::main]
 fn main() {
     let simplest_future = case0();
+    // simplest_future.await;
+    // simplest_future.await;
+    // simplest_future.poll();
     block_on(simplest_future)
 }

@@ -16,7 +16,7 @@ use std::{
     time::Duration,
 };
 
-use raven_macros::*;
+use jackdaw_macros::*;
 
 // Timer interface
 // Timer has a shared state for communication between the main thread and the timer thread
@@ -60,6 +60,7 @@ impl Future for Timer {
 
 impl Timer {
     // Constructor for Timer
+    // same as Timer::after(...)
     pub fn new(duration: Duration) -> Self {
         // Initialize the shared state
         let shared_state = Arc::new(Mutex::new(SharedState {

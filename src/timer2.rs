@@ -3,7 +3,7 @@
 // #![register_tool(raven)]
 // #![feature(stmt_expr_attributes)]
 
-use crate::{repo::{RVec, Repo}, verif::*};
+use crate::{repo::{RVec, Repo}, jackdaw_spec::*};
 use futures::{
     future::{BoxFuture, FutureExt},
     task::{waker_ref, ArcWake},
@@ -19,7 +19,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use raven_macros::*;
+use jackdaw_macros::*;
 
 // Timer interface
 // Timer has a shared state for communication between the main thread and the timer thread
@@ -105,7 +105,7 @@ impl Reactor {
             repo![ @partition: timers -> (ready, pending) | e1 ];
             let (ready, pending) = wakers.clone().partition(|s| s.instant < Instant::now());
 
-            repo![ @wake_all: ready ];
+            repo![ @wake: ready ];
             for s in ready {
                 s.waker.wake();
             }

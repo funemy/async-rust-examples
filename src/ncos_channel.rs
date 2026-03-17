@@ -8,7 +8,7 @@ use std::{
     task::{Context, Poll, Waker},
 };
 
-use raven_macros::*;
+use jackdaw_macros::*;
 
 pub fn channel<T>() -> (Sender<T>, Receiver<T>) {
     let inner = Arc::new(Inner::new());
@@ -73,33 +73,38 @@ impl<T> Sender<T> {
     }
 }
 
-event_decl!(e1, "self.complete is (first) set to true");
+event_decl!(e1, "self.complete is set to true / channel is consumed");
 event_decl!(e2, "self.rx_task is (first) set to the current task");
 
 // NOTE: The REALLY important stuff
 impl<T> Inner<T> {
-    // #[raven::pollable(NCOSChannel)]
+    #[raven::pollable(NCOSChannel)]
     #[raven::resp_transfer( e2 <: e1 )]
     #[raven::complete(e1)]
     fn recv(&self, cx: &Context<'_>) -> Poll<T> {
-        let done = if e1_obs!(self.complete.load(SeqCst)) {
+        let done = if self.complete.load(SeqCst) {
+            e1_tt!();
             true
         } else {
+            e1_ff!();
             let task = cx.waker().clone();
             match self.rx_task.try_lock() {
                 Ok(mut rx_task) => {
-                    *rx_task = Some(task); e2_tt!();
+                    *rx_task = Some(task);
+                    e2_tt!();
                     // NOTE: this can trigger "send@2"
                     // thread::sleep(Duration::from_secs(3));
                     false
                 }
-                Err(_) => { e1_tt!();
+                Err(_) => {
+                    e1_tt!();
                     true
                 }
             }
         };
 
-        if done || self.complete.load(SeqCst) { e1_tt!();
+        if done || self.complete.load(SeqCst) {
+            e1_tt!();
             match self.data.try_lock() {
                 Ok(mut d) => {
                     let data = d.take();
@@ -113,38 +118,35 @@ impl<T> Inner<T> {
                 }
                 Err(_) => unreachable!("recv@2"),
             }
-        } else { e1_ff!();
+        } else {
+            e1_ff!();
             println!("receiver pending");
             Poll::Pending
         }
     }
 
-    // #[raven::reactor(ncos_send: NCOSChannel)]
+    #[raven::reactor(NCOSChannelSend)]
+    #[raven::singleton_decl(ch: NCOSChannel)]
+    #[raven::terminate(e1)]
     fn send(&self, t: T) -> Result<(), T> {
         // prevent re-sending
-        if e1_obs!(self.complete.load(SeqCst)) {
+        if self.complete.load(SeqCst) {
+            e1_tt!();
             return Err(t);
         }
+        e1_ff!();
 
         match self.data.try_lock() {
             Ok(mut data) => {
                 assert!(data.is_none());
                 *data = Some(t);
-                // NOTE: setting complete here will be buggy --
-                //  If there's a big delay BETWEEN setting complete to true
-                //  and releasing the lock, and "recv" is called in the period,
-                //  then receiver will not store its waker to rx_task,
-                //  but the "try_lock" on data will also fail.
-                //  --
-                //  In conclusion, this may trigger recv@2
-                // self.complete.store(true, SeqCst);
-                // thread::sleep(Duration::from_secs(3));
             }
             Err(_) => {
                 unreachable!("send@1")
             }
         }
-        e1!(self.complete.store(true, SeqCst));
+        self.complete.store(true, SeqCst);
+        e1_tt!();
 
         match self.rx_task.try_lock() {
             Ok(mut rx_task) => {
@@ -152,12 +154,14 @@ impl<T> Inner<T> {
                 if let Some(w) = rx {
                     e2_tt!();
                     println!("wake up rx_task");
-                    wake!(w.wake());
+                    repo![ @wake: ch ];
+                    w.wake();
                 }
+                e2_ff!();
             }
             Err(_) => unreachable!("send@2"),
         }
-
+        e2_ff!();
         Ok(())
     }
 }

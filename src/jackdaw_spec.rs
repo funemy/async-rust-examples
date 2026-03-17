@@ -1,4 +1,4 @@
-use raven_macros::*;
+use jackdaw_macros::*;
 
 event_decl!(e1, "timer completed");
 event_decl!(e2, "timer's responsibility transferred");

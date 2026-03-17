@@ -18,7 +18,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use raven_macros::*;
+use jackdaw_macros::*;
 
 // Timer interface
 // Timer has a shared state for communication between the main thread and the timer thread
